@@ -1,0 +1,1300 @@
+{
+  "info": {
+    "name": "Pool Maintenance API Tests",
+    "description": "Complete test collection for Pool Maintenance API - Create database and test all endpoints",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "poolId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "taskId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "recordId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "visitId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Setup & Authentication",
+      "item": [
+        {
+          "name": "1.1 Create Admin User (First Time Setup)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/setup/admin",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "setup", "admin"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('adminToken', response.token);",
+                  "    pm.collectionVariables.set('userId', response.user.id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Get Current User Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. User Management (Admin Only)",
+      "item": [
+        {
+          "name": "2.1 Create Regular User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john@example.com\",\n  \"password\": \"user123\",\n  \"role\": \"user\",\n  \"phone\": \"+1234567890\",\n  \"consentGiven\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 Get All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users", "{{userId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Pool Management",
+      "item": [
+        {
+          "name": "3.1 Create Pool",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('poolId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Residential Pool 1\",\n  \"userId\": \"{{userId}}\",\n  \"address\": {\n    \"street\": \"123 Main St\",\n    \"city\": \"Anytown\",\n    \"state\": \"CA\",\n    \"zipCode\": \"90210\"\n  },\n  \"specifications\": {\n    \"type\": \"residential\",\n    \"volume\": {\n      \"value\": 15000,\n      \"unit\": \"gallons\"\n    },\n    \"surfaceArea\": {\n      \"value\": 400,\n      \"unit\": \"sqft\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pools",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Get All Pools",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pools",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Get Single Pool",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pools/{{poolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools", "{{poolId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Update Pool",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Pool Name\",\n  \"status\": \"active\",\n  \"specifications\": {\n    \"type\": \"residential\",\n    \"volume\": {\n      \"value\": 20000,\n      \"unit\": \"gallons\"\n    },\n    \"surfaceArea\": {\n      \"value\": 500,\n      \"unit\": \"sqft\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pools/{{poolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools", "{{poolId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 Update Pool Equipment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"equipment\": {\n    \"filter\": {\n      \"type\": \"sand\",\n      \"lastChanged\": \"2024-01-15\",\n      \"nextChange\": \"2024-07-15\"\n    },\n    \"pump\": {\n      \"type\": \"variable-speed\",\n      \"horsepower\": 1.5,\n      \"lastService\": \"2024-01-10\",\n      \"nextService\": \"2024-04-10\"\n    },\n    \"heater\": {\n      \"type\": \"gas\",\n      \"btu\": 400000,\n      \"lastService\": \"2024-01-05\",\n      \"nextService\": \"2024-04-05\"\n    }\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pools/{{poolId}}/equipment",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools", "{{poolId}}", "equipment"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.6 Update Chemical Levels",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"chemicalLevels\": {\n    \"chlorine\": 2.5,\n    \"pH\": 7.4,\n    \"alkalinity\": 120,\n    \"calcium\": 250,\n    \"cyanuricAcid\": 50,\n    \"temperature\": 82,\n    \"lastTested\": \"2024-01-20T10:00:00Z\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pools/{{poolId}}/chemicals",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools", "{{poolId}}", "chemicals"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.7 Delete Pool",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/pools/{{poolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools", "{{poolId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Task Management",
+      "item": [
+        {
+          "name": "4.1 Create Task",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('taskId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Weekly Pool Cleaning\",\n  \"description\": \"Clean pool, check chemical levels, and inspect equipment\",\n  \"poolId\": \"{{poolId}}\",\n  \"scheduledDate\": \"2024-01-25T09:00:00Z\",\n  \"priority\": \"medium\",\n  \"recurrence\": \"weekly\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 Get All Tasks",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 Get Tasks by Pool",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks?poolId={{poolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks"],
+              "query": [
+                {
+                  "key": "poolId",
+                  "value": "{{poolId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.4 Get Single Task",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.5 Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Weekly Pool Cleaning\",\n  \"description\": \"Updated description for pool cleaning task\",\n  \"scheduledDate\": \"2024-01-26T10:00:00Z\",\n  \"priority\": \"high\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.6 Complete Task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}", "complete"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.7 Sync Tasks",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tasks\": [\n    {\n      \"_id\": \"{{taskId}}\",\n      \"title\": \"Synced Task\",\n      \"description\": \"Task synced from client\",\n      \"poolId\": \"{{poolId}}\",\n      \"scheduledDate\": \"2024-01-27T11:00:00Z\",\n      \"status\": \"completed\",\n      \"completedAt\": \"2024-01-27T11:30:00Z\"\n    }\n  ],\n  \"lastSyncTimestamp\": \"2024-01-27T10:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "sync"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.8 Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Maintenance Records",
+      "item": [
+        {
+          "name": "5.1 Create Record",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('recordId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poolId\": \"{{poolId}}\",\n  \"taskId\": \"{{taskId}}\",\n  \"type\": \"chemical\",\n  \"description\": \"Weekly chemical balance check and adjustment\",\n  \"measurements\": {\n    \"chlorine\": 2.5,\n    \"pH\": 7.4,\n    \"alkalinity\": 120,\n    \"temperature\": 82\n  },\n  \"productsUsed\": [\n    {\n      \"name\": \"Chlorine Tablets\",\n      \"quantity\": 2,\n      \"unit\": \"tablets\"\n    },\n    {\n      \"name\": \"pH Plus\",\n      \"quantity\": 1,\n      \"unit\": \"cup\"\n    }\n  ],\n  \"notes\": \"Pool water is well balanced. No issues detected.\",\n  \"images\": [\n    \"https://example.com/image1.jpg\",\n    \"https://example.com/image2.jpg\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Get All Records",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Get Records by Pool",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records?poolId={{poolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"],
+              "query": [
+                {
+                  "key": "poolId",
+                  "value": "{{poolId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 Get Records by Type",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records?type=chemical",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records"],
+              "query": [
+                {
+                  "key": "type",
+                  "value": "chemical"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.5 Get Single Record",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.6 Update Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated chemical balance check\",\n  \"measurements\": {\n    \"chlorine\": 3.0,\n    \"pH\": 7.2,\n    \"alkalinity\": 125,\n    \"temperature\": 84\n  },\n  \"notes\": \"Updated notes: Pool water is perfectly balanced.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.7 Sync Records",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"records\": [\n    {\n      \"_id\": \"{{recordId}}\",\n      \"poolId\": \"{{poolId}}\",\n      \"type\": \"cleaning\",\n      \"description\": \"Synced cleaning record\",\n      \"measurements\": {\n        \"chlorine\": 2.8,\n        \"pH\": 7.3\n      },\n      \"createdAt\": \"2024-01-27T12:00:00Z\"\n    }\n  ],\n  \"lastSyncTimestamp\": \"2024-01-27T11:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/sync",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "sync"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.8 Delete Record",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. Troubleshooting Guides",
+      "item": [
+        {
+          "name": "6.1 Get All Guides",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/troubleshooting",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "troubleshooting"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 Get Guides by Category",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/troubleshooting?category=chemical",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "troubleshooting"],
+              "query": [
+                {
+                  "key": "category",
+                  "value": "chemical"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.3 Search Guides",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/troubleshooting?search=chlorine",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "troubleshooting"],
+              "query": [
+                {
+                  "key": "search",
+                  "value": "chlorine"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "7. Visit Management",
+      "item": [
+        {
+          "name": "7.1 Regular User Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('clientToken', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"john@example.com\",\n  \"password\": \"user123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.2 Create Visit Request (Regular User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('visitId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clientToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poolId\": \"{{poolId}}\",\n  \"requestedDate\": \"2024-02-15T10:00:00Z\",\n  \"preferredTimeSlot\": \"morning\",\n  \"reason\": \"Regular pool maintenance and chemical balance check\",\n  \"description\": \"Pool needs weekly maintenance including chlorine adjustment and pH testing\",\n  \"priority\": \"medium\",\n  \"contactPhone\": \"+1234567890\",\n  \"contactEmail\": \"john@example.com\",\n  \"specialInstructions\": \"Please ring doorbell when arriving\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.3 Get All Visits (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.4 Get Pending Visits",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits?status=pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "pending"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.5 Approve Visit Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledDate\": \"2024-02-15T09:00:00Z\",\n  \"scheduledTimeSlot\": \"morning\",\n  \"assignedTechnician\": \"{{userId}}\",\n  \"adminNotes\": \"Technician will arrive between 9-11 AM. Please ensure pool area is accessible.\",\n  \"estimatedDuration\": 90\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "approve"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.6 Get Single Visit",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.7 Reschedule Visit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledDate\": \"2024-02-16T10:00:00Z\",\n  \"scheduledTimeSlot\": \"morning\",\n  \"rescheduleReason\": \"Technician unavailable on original date due to emergency call\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/reschedule",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "reschedule"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.8 Complete Visit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "complete"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.9 Get Visit Statistics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.10 Create Another Visit for Decline Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    const response = pm.response.json();",
+                  "    pm.collectionVariables.set('visitId', response.data._id);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clientToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poolId\": \"{{poolId}}\",\n  \"requestedDate\": \"2024-02-20T15:00:00Z\",\n  \"preferredTimeSlot\": \"afternoon\",\n  \"reason\": \"Pool cleaning and chemical adjustment\",\n  \"description\": \"Regular maintenance visit\",\n  \"priority\": \"low\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.11 Decline Visit Request",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"declineReason\": \"No technicians available on requested date. Please request a different date.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/decline",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "decline"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.12 Cancel Visit (Regular User)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clientToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "cancel"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "8. Error Testing",
+      "item": [
+        {
+          "name": "7.1 Login with Wrong Password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.2 Access Protected Route Without Token",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "7.3 Access Admin Route as Regular User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "admin", "users"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.4 Create Pool with Invalid Data",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"\",\n  \"userId\": \"invalid-id\",\n  \"address\": {\n    \"street\": \"\",\n    \"city\": \"\",\n    \"state\": \"\",\n    \"zipCode\": \"\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pools",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.5 Create Visit with Invalid Pool ID",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clientToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"poolId\": \"invalid-pool-id\",\n  \"requestedDate\": \"2024-02-15T10:00:00Z\",\n  \"reason\": \"Test invalid pool\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.6 Access Visit Stats as Client",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{clientToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "8.7 Approve Non-Pending Visit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledDate\": \"2024-02-20T09:00:00Z\",\n  \"scheduledTimeSlot\": \"morning\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "approve"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+} 

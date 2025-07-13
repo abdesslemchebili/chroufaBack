@@ -60,8 +60,27 @@ const swaggerOptions = {
       {
         name: 'Admin',
         description: 'Administrative operations'
+      },
+      {
+        name: 'Pools',
+        description: 'Pool management operations'
+      },
+      {
+        name: 'Tasks',
+        description: 'Task management operations'
+      },
+      {
+        name: 'Records',
+        description: 'Maintenance records operations'
+      },
+      {
+        name: 'Troubleshooting',
+        description: 'Troubleshooting guides operations'
+      },
+      {
+        name: 'Visits',
+        description: 'Visit request and management operations'
       }
-      // Add other tags as needed
     ]
   },
   apis: ['./routes/*.js']
@@ -74,8 +93,11 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 app.use('/api/admin', adminRoutes);
 app.use('/api/setup', setupRoutes);
 app.use('/api/auth', authRoutes);
-// Mount other routes here...
 app.use('/api/pools', require('./routes/pools'));
+app.use('/api/tasks', require('./routes/tasks'));
+app.use('/api/records', require('./routes/records'));
+app.use('/api/troubleshooting', require('./routes/troubleshooting'));
+app.use('/api/visits', require('./routes/visits'));
 
 // Root route
 app.get('/', (req, res) => {

@@ -115,3 +115,100 @@ exports.sendTaskNotification = async (taskId, notificationType) => {
     console.error('Error sending task notification:', error);
   }
 };
+
+/**
+ * Send notification for new visit request (to admin)
+ */
+exports.sendVisitRequestNotification = async (visit) => {
+  try {
+    console.log(`New visit request from ${visit.client.name} for pool: ${visit.pool.name}`);
+    console.log(`Visit details: ${visit.reason} on ${visit.requestedDate}`);
+    
+    // In a real app, you would send notification to admin here
+    // This could be email, SMS, or push notification
+    console.log(`Would notify admin about new visit request: ${visit._id}`);
+  } catch (error) {
+    console.error('Error sending visit request notification:', error);
+  }
+};
+
+/**
+ * Send notification for visit approval (to client)
+ */
+exports.sendVisitApprovalNotification = async (visit) => {
+  try {
+    console.log(`Visit approved for ${visit.client.name}`);
+    console.log(`Scheduled for: ${visit.scheduledDate} at ${visit.scheduledTimeSlot}`);
+    
+    // In a real app, you would send notification to client here
+    if (visit.client.phone) {
+      console.log(`Would send SMS to ${visit.client.phone} about approved visit`);
+    }
+    if (visit.client.email) {
+      console.log(`Would send email to ${visit.client.email} about approved visit`);
+    }
+  } catch (error) {
+    console.error('Error sending visit approval notification:', error);
+  }
+};
+
+/**
+ * Send notification for visit decline (to client)
+ */
+exports.sendVisitDeclineNotification = async (visit) => {
+  try {
+    console.log(`Visit declined for ${visit.client.name}`);
+    console.log(`Reason: ${visit.declineReason}`);
+    
+    // In a real app, you would send notification to client here
+    if (visit.client.phone) {
+      console.log(`Would send SMS to ${visit.client.phone} about declined visit`);
+    }
+    if (visit.client.email) {
+      console.log(`Would send email to ${visit.client.email} about declined visit`);
+    }
+  } catch (error) {
+    console.error('Error sending visit decline notification:', error);
+  }
+};
+
+/**
+ * Send notification for visit reschedule (to client)
+ */
+exports.sendVisitRescheduleNotification = async (visit) => {
+  try {
+    console.log(`Visit rescheduled for ${visit.client.name}`);
+    console.log(`New schedule: ${visit.scheduledDate} at ${visit.scheduledTimeSlot}`);
+    console.log(`Reason: ${visit.rescheduleReason}`);
+    
+    // In a real app, you would send notification to client here
+    if (visit.client.phone) {
+      console.log(`Would send SMS to ${visit.client.phone} about rescheduled visit`);
+    }
+    if (visit.client.email) {
+      console.log(`Would send email to ${visit.client.email} about rescheduled visit`);
+    }
+  } catch (error) {
+    console.error('Error sending visit reschedule notification:', error);
+  }
+};
+
+/**
+ * Send notification for visit completion (to client)
+ */
+exports.sendVisitCompletionNotification = async (visit) => {
+  try {
+    console.log(`Visit completed for ${visit.client.name}`);
+    console.log(`Pool: ${visit.pool.name}`);
+    
+    // In a real app, you would send notification to client here
+    if (visit.client.phone) {
+      console.log(`Would send SMS to ${visit.client.phone} about completed visit`);
+    }
+    if (visit.client.email) {
+      console.log(`Would send email to ${visit.client.email} about completed visit`);
+    }
+  } catch (error) {
+    console.error('Error sending visit completion notification:', error);
+  }
+};
