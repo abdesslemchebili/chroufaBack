@@ -9,6 +9,9 @@ const swaggerUi = require('swagger-ui-express');
 const adminRoutes = require('./routes/admin');
 const setupRoutes = require('./routes/setup');
 const authRoutes = require('./routes/auth');
+const invoiceRoutes = require('./routes/invoices');
+const analyticsRoutes = require('./routes/analytics');
+const appointmentRoutes = require('./routes/appointments');
 // Import other routes here...
 
 const app = express();
@@ -80,6 +83,18 @@ const swaggerOptions = {
       {
         name: 'Visits',
         description: 'Visit request and management operations'
+      },
+      {
+        name: 'Invoices',
+        description: 'Invoice and payment management operations'
+      },
+      {
+        name: 'Analytics',
+        description: 'Analytics and reporting operations'
+      },
+      {
+        name: 'Appointments',
+        description: 'Recurring appointment management operations'
       }
     ]
   },
@@ -98,6 +113,9 @@ app.use('/api/tasks', require('./routes/tasks'));
 app.use('/api/records', require('./routes/records'));
 app.use('/api/troubleshooting', require('./routes/troubleshooting'));
 app.use('/api/visits', require('./routes/visits'));
+app.use('/api/invoices', invoiceRoutes);
+app.use('/api/analytics', analyticsRoutes);
+app.use('/api/appointments', appointmentRoutes);
 
 // Root route
 app.get('/', (req, res) => {

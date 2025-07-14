@@ -7,15 +7,11 @@ const {
   getPool,
   updatePool,
   deletePool,
-  updateEquipment,
-  updateChemicalLevels,
   updateStatus
 } = require('../controllers/poolController');
-const { protect, authorize } = require('../middleware/auth');
+const { protect } = require('../middleware/auth');
 const { 
   poolValidationRules, 
-  equipmentValidationRules, 
-  chemicalLevelsValidationRules,
   validate 
 } = require('../middleware/validation');
 
@@ -23,7 +19,7 @@ const {
  * @swagger
  * /api/pools:
  *   post:
- *     summary: Create a new pool and assign to user (Admin only)
+ *     summary: Create a new pool
  *     tags: [Pools]
  *     security:
  *       - bearerAuth: []
@@ -36,67 +32,84 @@ const {
  *             required:
  *               - name
  *               - address
- *               - specifications
- *               - userId
+ *               - owner
+ *               - type
  *             properties:
- *               userId:
- *                 type: string
- *                 description: ID of the user to assign the pool to
  *               name:
  *                 type: string
+ *                 description: Pool name
+ *                 example: "Backyard Pool"
  *               address:
+ *                 type: string
+ *                 description: Street address
+ *                 example: "123 Main Street"
+ *               owner:
+ *                 type: string
+ *                 description: ID of the pool owner
+ *                 example: "60d21b4667d0d8992e610c85"
+ *               type:
+ *                 type: string
+ *                 enum: [residential, commercial, public]
+ *                 description: Type of pool
+ *                 example: "residential"
+ *               size:
  *                 type: object
- *                 required:
- *                   - street
- *                   - city
- *                   - state
- *                   - zipCode
+ *                 description: Pool size (optional)
  *                 properties:
- *                   street:
+ *                   value:
+ *                     type: number
+ *                     example: 500
+ *                   unit:
  *                     type: string
- *                   city:
- *                     type: string
- *                   state:
- *                     type: string
- *                   zipCode:
- *                     type: string
- *               specifications:
+ *                     enum: [sqft, sqm]
+ *                     default: "sqft"
+ *                     example: "sqft"
+ *               volume:
  *                 type: object
- *                 required:
- *                   - type
- *                   - volume
- *                   - surfaceArea
+ *                 description: Pool volume (optional)
  *                 properties:
- *                   type:
+ *                   value:
+ *                     type: number
+ *                     example: 15000
+ *                   unit:
  *                     type: string
- *                     enum: [residential, commercial, public]
- *                   volume:
- *                     type: object
- *                     properties:
- *                       value:
- *                         type: number
- *                       unit:
- *                         type: string
- *                         enum: [gallons, liters]
- *                   surfaceArea:
- *                     type: object
- *                     properties:
- *                       value:
- *                         type: number
- *                       unit:
- *                         type: string
- *                         enum: [sqft, sqm]
+ *                     enum: [gallons, liters]
+ *                     default: "gallons"
+ *                     example: "gallons"
  *     responses:
  *       201:
  *         description: Pool created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     _id:
+ *                       type: string
+ *                     name:
+ *                       type: string
+ *                     address:
+ *                       type: string
+ *                     owner:
+ *                       type: string
+ *                     type:
+ *                       type: string
+ *                     status:
+ *                       type: string
+ *       400:
+ *         description: Invalid input data
  *       401:
  *         description: Not authorized
- *       403:
- *         description: Not authorized as admin
  *       404:
- *         description: User not found
+ *         description: Pool owner not found
  */
-router.post('/', protect, authorize('admin'), poolValidationRules(), validate, createPool);
+router.post('/', protect, poolValidationRules(), validate, createPool);
 
 /**
  * @swagger
@@ -109,8 +122,45 @@ router.post('/', protect, authorize('admin'), poolValidationRules(), validate, c
  *     responses:
  *       200:
  *         description: List of pools
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 count:
+ *                   type: number
+ *                   example: 2
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       _id:
+ *                         type: string
+ *                       name:
+ *                         type: string
+ *                       address:
+ *                         type: string
+ *                       owner:
+ *                         type: object
+ *                         properties:
+ *                           _id:
+ *                             type: string
+ *                           name:
+ *                             type: string
+ *                           email:
+ *                             type: string
+ *                       type:
+ *                         type: string
+ *                       status:
+ *                         type: string
+ *       401:
+ *         description: Not authorized
  */
-router.get('/', getPools);
+router.get('/', protect, getPools);
 
 /**
  * @swagger
@@ -130,10 +180,12 @@ router.get('/', getPools);
  *     responses:
  *       200:
  *         description: Pool details
+ *       401:
+ *         description: Not authorized
  *       404:
  *         description: Pool not found
  */
-router.get('/:id', getPool);
+router.get('/:id', protect, getPool);
 
 /**
  * @swagger
@@ -159,16 +211,32 @@ router.get('/:id', getPool);
  *             properties:
  *               name:
  *                 type: string
+ *                 description: Pool name
  *               address:
+ *                 type: string
+ *                 description: Street address
+ *               type:
+ *                 type: string
+ *                 enum: [residential, commercial, public]
+ *                 description: Pool type
+ *               size:
  *                 type: object
- *               specifications:
+ *                 description: Pool size
+ *               volume:
  *                 type: object
+ *                 description: Pool volume
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes
  *               status:
  *                 type: string
  *                 enum: [active, inactive, maintenance]
+ *                 description: Pool status
  *     responses:
  *       200:
  *         description: Pool updated successfully
+ *       401:
+ *         description: Not authorized
  *       404:
  *         description: Pool not found
  */
@@ -192,121 +260,12 @@ router.put('/:id', protect, poolValidationRules(), validate, updatePool);
  *     responses:
  *       200:
  *         description: Pool deleted successfully
+ *       401:
+ *         description: Not authorized
  *       404:
  *         description: Pool not found
  */
 router.delete('/:id', protect, deletePool);
-
-/**
- * @swagger
- * /api/pools/{id}/equipment:
- *   put:
- *     summary: Update pool equipment
- *     tags: [Pools]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Pool ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - equipment
- *             properties:
- *               equipment:
- *                 type: array
- *                 items:
- *                   type: object
- *                   required:
- *                     - type
- *                     - name
- *                   properties:
- *                     type:
- *                       type: string
- *                       enum: [pump, filter, heater, chlorinator, other]
- *                     name:
- *                       type: string
- *                     model:
- *                       type: string
- *                     serialNumber:
- *                       type: string
- *                     installationDate:
- *                       type: string
- *                       format: date
- *                     lastServiceDate:
- *                       type: string
- *                       format: date
- *     responses:
- *       200:
- *         description: Pool equipment updated successfully
- *       404:
- *         description: Pool not found
- */
-router.put('/:id/equipment', protect, equipmentValidationRules(), validate, updateEquipment);
-
-/**
- * @swagger
- * /api/pools/{id}/chemical-levels:
- *   put:
- *     summary: Update chemical levels ideal ranges
- *     tags: [Pools]
- *     security:
- *       - bearerAuth: []
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema:
- *           type: string
- *         description: Pool ID
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             required:
- *               - idealRanges
- *             properties:
- *               idealRanges:
- *                 type: object
- *                 properties:
- *                   chlorine:
- *                     type: object
- *                     properties:
- *                       min:
- *                         type: number
- *                       max:
- *                         type: number
- *                   pH:
- *                     type: object
- *                     properties:
- *                       min:
- *                         type: number
- *                       max:
- *                         type: number
- *                   alkalinity:
- *                     type: object
- *                     properties:
- *                       min:
- *                         type: number
- *                       max:
- *                         type: number
- *     responses:
- *       200:
- *         description: Chemical levels updated successfully
- *       404:
- *         description: Pool not found
- */
-router.put('/:id/chemical-levels', protect, chemicalLevelsValidationRules(), validate, updateChemicalLevels);
 
 /**
  * @swagger
@@ -335,14 +294,15 @@ router.put('/:id/chemical-levels', protect, chemicalLevelsValidationRules(), val
  *               status:
  *                 type: string
  *                 enum: [active, inactive, maintenance]
+ *                 description: New pool status
  *     responses:
  *       200:
  *         description: Pool status updated successfully
+ *       401:
+ *         description: Not authorized
  *       404:
  *         description: Pool not found
  */
-router.put('/:id/status', protect, [
-  body('status').isIn(['active', 'inactive', 'maintenance'])
-], validate, updateStatus);
+router.put('/:id/status', protect, updateStatus);
 
 module.exports = router; 

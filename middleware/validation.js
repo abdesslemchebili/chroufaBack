@@ -22,72 +22,33 @@ exports.userValidationRules = () => {
   ];
 };
 
-// Pool validation rules
+// Pool validation rules (simplified)
 exports.poolValidationRules = () => {
   return [
-    body('userId', 'User ID is required').notEmpty(),
-    body('name', 'Pool name is required').notEmpty(),
-    body('address.street', 'Street address is required').notEmpty(),
-    body('address.city', 'City is required').notEmpty(),
-    body('address.state', 'State is required').notEmpty(),
-    body('address.zipCode', 'Zip code is required').notEmpty(),
-    body('specifications.type', 'Pool type must be residential, commercial, or public')
+    body('name', 'Pool name is required').notEmpty().trim(),
+    body('address', 'Street address is required').notEmpty().trim(),
+    body('owner', 'Pool owner is required').notEmpty().isMongoId(),
+    body('type', 'Pool type must be residential, commercial, or public')
       .isIn(['residential', 'commercial', 'public']),
-    body('specifications.volume.value', 'Volume value must be a positive number')
-      .isFloat({ min: 0 }),
-    body('specifications.volume.unit', 'Volume unit must be gallons or liters')
+    // Optional fields
+    body('size.value', 'Size value must be a positive number')
       .optional()
-      .isIn(['gallons', 'liters']),
-    body('specifications.surfaceArea.value', 'Surface area value must be a positive number')
       .isFloat({ min: 0 }),
-    body('specifications.surfaceArea.unit', 'Surface area unit must be sqft or sqm')
+    body('size.unit', 'Size unit must be sqft or sqm')
       .optional()
       .isIn(['sqft', 'sqm']),
-    body('equipment.*.type', 'Equipment type must be valid')
+    body('volume.value', 'Volume value must be a positive number')
       .optional()
-      .isIn(['pump', 'filter', 'heater', 'chlorinator', 'other']),
-    body('equipment.*.name', 'Equipment name is required when equipment is provided')
+      .isFloat({ min: 0 }),
+    body('volume.unit', 'Volume unit must be gallons or liters')
       .optional()
-      .notEmpty(),
+      .isIn(['gallons', 'liters']),
     body('status', 'Status must be active, inactive, or maintenance')
       .optional()
-      .isIn(['active', 'inactive', 'maintenance'])
-  ];
-};
-
-// Pool equipment validation rules
-exports.equipmentValidationRules = () => {
-  return [
-    body('equipment', 'Equipment array is required').isArray(),
-    body('equipment.*.type', 'Equipment type must be valid')
-      .isIn(['pump', 'filter', 'heater', 'chlorinator', 'other']),
-    body('equipment.*.name', 'Equipment name is required').notEmpty(),
-    body('equipment.*.model').optional(),
-    body('equipment.*.serialNumber').optional(),
-    body('equipment.*.installationDate', 'Installation date must be a valid date')
+      .isIn(['active', 'inactive', 'maintenance']),
+    body('notes', 'Notes must be a string')
       .optional()
-      .isISO8601(),
-    body('equipment.*.lastServiceDate', 'Last service date must be a valid date')
-      .optional()
-      .isISO8601()
-  ];
-};
-
-// Chemical levels validation rules
-exports.chemicalLevelsValidationRules = () => {
-  return [
-    body('idealRanges.chlorine.min', 'Chlorine minimum must be a number between 0 and 10')
-      .isFloat({ min: 0, max: 10 }),
-    body('idealRanges.chlorine.max', 'Chlorine maximum must be a number between 0 and 10')
-      .isFloat({ min: 0, max: 10 }),
-    body('idealRanges.pH.min', 'pH minimum must be a number between 6.8 and 8.0')
-      .isFloat({ min: 6.8, max: 8.0 }),
-    body('idealRanges.pH.max', 'pH maximum must be a number between 6.8 and 8.0')
-      .isFloat({ min: 6.8, max: 8.0 }),
-    body('idealRanges.alkalinity.min', 'Alkalinity minimum must be a number between 0 and 240')
-      .isFloat({ min: 0, max: 240 }),
-    body('idealRanges.alkalinity.max', 'Alkalinity maximum must be a number between 0 and 240')
-      .isFloat({ min: 0, max: 240 })
+      .isString()
   ];
 };
 

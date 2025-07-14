@@ -7,92 +7,41 @@ const PoolSchema = new mongoose.Schema({
     trim: true
   },
   address: {
-    street: {
-      type: String,
-      required: [true, 'Please add a street address'],
-      trim: true
-    },
-    city: {
-      type: String,
-      required: [true, 'Please add a city'],
-      trim: true
-    },
-    state: {
-      type: String,
-      required: [true, 'Please add a state'],
-      trim: true
-    },
-    zipCode: {
-      type: String,
-      required: [true, 'Please add a zip code'],
-      trim: true
-    }
+    type: String,
+    required: [true, 'Please add a street address'],
+    trim: true
   },
-  userId: {
+  owner: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
-    required: true
+    required: [true, 'Please specify the pool owner'],
+    alias: 'userId' // Keep backward compatibility
   },
-  specifications: {
-    type: {
+  type: {
+    type: String,
+    enum: ['residential', 'commercial', 'public'],
+    required: [true, 'Please specify the pool type']
+  },
+  size: {
+    value: {
+      type: Number,
+      min: 0
+    },
+    unit: {
       type: String,
-      enum: ['residential', 'commercial', 'public'],
-      required: true
-    },
-    volume: {
-      value: {
-        type: Number,
-        required: [true, 'Please add pool volume'],
-        min: 0
-      },
-      unit: {
-        type: String,
-        enum: ['gallons', 'liters'],
-        default: 'gallons'
-      }
-    },
-    surfaceArea: {
-      value: {
-        type: Number,
-        required: [true, 'Please add surface area'],
-        min: 0
-      },
-      unit: {
-        type: String,
-        enum: ['sqft', 'sqm'],
-        default: 'sqft'
-      }
+      enum: ['sqft', 'sqm'],
+      default: 'sqft'
     }
   },
-  equipment: [{
-    type: {
-      type: String,
-      enum: ['pump', 'filter', 'heater', 'chlorinator', 'other'],
-      required: true
+  volume: {
+    value: {
+      type: Number,
+      min: 0
     },
-    name: {
+    unit: {
       type: String,
-      required: true
-    },
-    model: String,
-    serialNumber: String,
-    installationDate: Date,
-    lastServiceDate: Date
-  }],
-  chemicalLevels: {
-    idealRanges: {
-      chlorine: {
-        min: { type: Number, default: 1 },
-        max: { type: Number, default: 3 }
-      },
-      pH: {
-        min: { type: Number, default: 7.2 },
-        max: { type: Number, default: 7.6 }
-      },
-      alkalinity: {
-        min: { type: Number, default: 80 },
-        max: { type: Number, default: 120 }
-      }
+      enum: ['gallons', 'liters'],
+      default: 'gallons'
     }
   },
   status: {
@@ -102,17 +51,20 @@ const PoolSchema = new mongoose.Schema({
   },
   notes: String,
   images: [String],
-  lastInspection: {
-    date: Date,
-    inspector: String,
-    notes: String
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
   }
 }, {
   timestamps: true
 });
 
 // Index for faster queries
-PoolSchema.index({ userId: 1 });
-PoolSchema.index({ 'address.zipCode': 1 });
+PoolSchema.index({ owner: 1 });
+PoolSchema.index({ address: 1 });
 
 module.exports = mongoose.model('Pool', PoolSchema); 

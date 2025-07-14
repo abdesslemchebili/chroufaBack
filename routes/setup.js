@@ -6,9 +6,9 @@ const User = require('../models/User');
  * @swagger
  * /api/setup/admin:
  *   post:
- *     summary: Create initial admin user (first-time setup only)
+ *     summary: Create admin user
  *     tags: [Setup]
- *     description: This endpoint creates the first admin user. It can only be used once, when no admin exists in the system.
+ *     description: This endpoint creates an admin user. Can be used multiple times to create additional admin users.
  *     requestBody:
  *       required: true
  *       content:
@@ -64,7 +64,7 @@ const User = require('../models/User');
  *                       type: string
  *                       example: admin
  *       400:
- *         description: Admin user already exists
+ *         description: Invalid input or user already exists
  *         content:
  *           application/json:
  *             schema:
@@ -75,7 +75,7 @@ const User = require('../models/User');
  *                   example: false
  *                 message:
  *                   type: string
- *                   example: Admin user already exists. Setup is complete.
+ *                   example: Invalid input data
  *       500:
  *         description: Server error
  *         content:
@@ -94,16 +94,6 @@ const User = require('../models/User');
  */
 router.post('/admin', async (req, res) => {
   try {
-    // Check if any admin already exists
-    const adminExists = await User.findOne({ role: 'admin' });
-    
-    if (adminExists) {
-      return res.status(400).json({
-        success: false,
-        message: 'Admin user already exists. Setup is complete.'
-      });
-    }
-    
     const { name, email, password } = req.body;
     
     // Create admin user
@@ -121,7 +111,7 @@ router.post('/admin', async (req, res) => {
     
     res.status(201).json({
       success: true,
-      message: 'Admin user created successfully. You can now log in.',
+      message: 'Admin user created successfully.',
       data: admin
     });
   } catch (error) {

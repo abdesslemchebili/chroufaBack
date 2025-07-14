@@ -1,21 +1,40 @@
 const Pool = require('../models/Pool');
 const User = require('../models/User');
 
-// @desc    Create new pool and assign to user (Admin only)
+// @desc    Create new pool
 // @route   POST /api/pools
-// @access  Admin
+// @access  Private
 exports.createPool = async (req, res, next) => {
   try {
-    // Check if the target user exists
-    const user = await User.findById(req.body.userId);
+    const { name, address, owner, type, size, volume } = req.body;
+    
+    // Check if the owner exists
+    const user = await User.findById(owner);
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: 'User not found'
+        message: 'Pool owner not found'
       });
     }
     
-    const pool = await Pool.create(req.body);
+    // Create pool with simplified structure
+    const poolData = {
+      name,
+      address,
+      owner,
+      type
+    };
+    
+    // Add optional fields if provided
+    if (size) {
+      poolData.size = size;
+    }
+    
+    if (volume) {
+      poolData.volume = volume;
+    }
+    
+    const pool = await Pool.create(poolData);
     
     res.status(201).json({
       success: true,
@@ -31,30 +50,38 @@ exports.createPool = async (req, res, next) => {
 // @access  Private
 exports.getPools = async (req, res, next) => {
   try {
-    const responses = await Pool.find({});
+    let query = {};
+    
+    // If user is not admin, only show their pools
+    if (req.user.role !== 'admin') {
+      query.owner = req.user.id;
+    }
+    
+    const pools = await Pool.find(query).populate('owner', 'name email');
+    
     res.status(200).json({
       success: true,
-      count: responses.length,
-      data: responses
+      count: pools.length,
+      data: pools
     });
-    console.log('====================================');
-    console.log(responses,"here");
-    console.log('====================================');
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ success: false, message: "Server Error" });
+    next(error);
   }
 };
-
 
 // @desc    Get single pool
 // @route   GET /api/pools/:id
 // @access  Private
 exports.getPool = async (req, res, next) => {
   try {
-    const pool = await Pool.findOne({
-      _id: req.params.id,
-    });
+    let query = { _id: req.params.id };
+    
+    // If user is not admin, only allow access to their own pools
+    if (req.user.role !== 'admin') {
+      query.owner = req.user.id;
+    }
+    
+    const pool = await Pool.findOne(query).populate('owner', 'name email');
     
     if (!pool) {
       return res.status(404).json({
@@ -77,10 +104,14 @@ exports.getPool = async (req, res, next) => {
 // @access  Private
 exports.updatePool = async (req, res, next) => {
   try {
-    let pool = await Pool.findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
+    let query = { _id: req.params.id };
+    
+    // If user is not admin, only allow updates to their own pools
+    if (req.user.role !== 'admin') {
+      query.owner = req.user.id;
+    }
+    
+    let pool = await Pool.findOne(query);
     
     if (!pool) {
       return res.status(404).json({
@@ -89,14 +120,26 @@ exports.updatePool = async (req, res, next) => {
       });
     }
     
+    // Update pool with new data
+    const { name, address, type, size, volume, notes, status } = req.body;
+    const updateData = {};
+    
+    if (name !== undefined) updateData.name = name;
+    if (address !== undefined) updateData.address = address;
+    if (type !== undefined) updateData.type = type;
+    if (size !== undefined) updateData.size = size;
+    if (volume !== undefined) updateData.volume = volume;
+    if (notes !== undefined) updateData.notes = notes;
+    if (status !== undefined) updateData.status = status;
+    
     pool = await Pool.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateData,
       {
         new: true,
         runValidators: true
       }
-    );
+    ).populate('owner', 'name email');
     
     res.status(200).json({
       success: true,
@@ -112,10 +155,14 @@ exports.updatePool = async (req, res, next) => {
 // @access  Private
 exports.deletePool = async (req, res, next) => {
   try {
-    const pool = await Pool.findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
+    let query = { _id: req.params.id };
+    
+    // If user is not admin, only allow deletion of their own pools
+    if (req.user.role !== 'admin') {
+      query.owner = req.user.id;
+    }
+    
+    const pool = await Pool.findOne(query);
     
     if (!pool) {
       return res.status(404).json({
@@ -135,73 +182,19 @@ exports.deletePool = async (req, res, next) => {
   }
 };
 
-// @desc    Update pool equipment
-// @route   PUT /api/pools/:id/equipment
-// @access  Private
-exports.updateEquipment = async (req, res, next) => {
-  try {
-    const pool = await Pool.findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (!pool) {
-      return res.status(404).json({
-        success: false,
-        message: 'Pool not found'
-      });
-    }
-    
-    pool.equipment = req.body.equipment;
-    await pool.save();
-    
-    res.status(200).json({
-      success: true,
-      data: pool
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-// @desc    Update chemical levels ideal ranges
-// @route   PUT /api/pools/:id/chemical-levels
-// @access  Private
-exports.updateChemicalLevels = async (req, res, next) => {
-  try {
-    const pool = await Pool.findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
-    
-    if (!pool) {
-      return res.status(404).json({
-        success: false,
-        message: 'Pool not found'
-      });
-    }
-    
-    pool.chemicalLevels.idealRanges = req.body.idealRanges;
-    await pool.save();
-    
-    res.status(200).json({
-      success: true,
-      data: pool
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
 // @desc    Update pool status
 // @route   PUT /api/pools/:id/status
 // @access  Private
 exports.updateStatus = async (req, res, next) => {
   try {
-    const pool = await Pool.findOne({
-      _id: req.params.id,
-      userId: req.user.id
-    });
+    let query = { _id: req.params.id };
+    
+    // If user is not admin, only allow status updates to their own pools
+    if (req.user.role !== 'admin') {
+      query.owner = req.user.id;
+    }
+    
+    const pool = await Pool.findOne(query);
     
     if (!pool) {
       return res.status(404).json({
