@@ -171,7 +171,7 @@ exports.deletePool = async (req, res, next) => {
       });
     }
     
-    await pool.remove();
+    await Pool.findByIdAndDelete(req.params.id);
     
     res.status(200).json({
       success: true,

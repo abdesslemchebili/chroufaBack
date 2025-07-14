@@ -137,6 +137,16 @@
         "headers": {
           "Authorization": "Bearer <token>"
         }
+      },
+      "updateStatus": {
+        "method": "PUT",
+        "url": "/api/pools/:id/status",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "status": "active | inactive | maintenance"
+        }
       }
     }
   },
@@ -175,6 +185,14 @@
         "url": "/api/visits",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "query": {
+          "status": "string (optional)",
+          "poolId": "string (optional)",
+          "startDate": "string (optional)",
+          "endDate": "string (optional)",
+          "page": "number (optional)",
+          "limit": "number (optional)"
         }
       },
       "create": {
@@ -185,11 +203,35 @@
         },
         "body": {
           "poolId": "string",
-          "serviceType": "string",
-          "description": "string",
-          "preferredDate": "Date",
-          "preferredTimeSlot": "string",
-          "priority": "string"
+          "requestedDate": "Date",
+          "preferredTimeSlot": "morning | afternoon | evening | any",
+          "reason": "string",
+          "description": "string (optional)",
+          "priority": "low | medium | high | urgent (optional)",
+          "contactPhone": "string (optional)",
+          "contactEmail": "string (optional)",
+          "specialInstructions": "string (optional)"
+        }
+      },
+      "get": {
+        "method": "GET",
+        "url": "/api/visits/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "update": {
+        "method": "PUT",
+        "url": "/api/visits/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "delete": {
+        "method": "DELETE",
+        "url": "/api/visits/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
         }
       },
       "approve": {
@@ -197,6 +239,13 @@
         "url": "/api/visits/:id/approve",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "scheduledDate": "Date",
+          "scheduledTimeSlot": "morning | afternoon | evening",
+          "assignedTechnician": "string (optional)",
+          "estimatedDuration": "number (optional)",
+          "adminNotes": "string (optional)"
         }
       },
       "decline": {
@@ -204,6 +253,9 @@
         "url": "/api/visits/:id/decline",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "declineReason": "string"
         }
       },
       "reschedule": {
@@ -213,9 +265,9 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "newDate": "Date",
-          "newTimeSlot": "string",
-          "reason": "string"
+          "scheduledDate": "Date",
+          "scheduledTimeSlot": "morning | afternoon | evening",
+          "rescheduleReason": "string"
         }
       },
       "complete": {
@@ -228,6 +280,21 @@
           "completionNotes": "string",
           "technicianId": "string"
         }
+      },
+      "cancel": {
+        "method": "PUT",
+        "url": "/api/visits/:id/cancel",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "stats": {
+        "method": "GET",
+        "url": "/api/visits/stats",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        },
+        "adminOnly": true
       }
     }
   },
@@ -271,6 +338,34 @@
           "scheduledDate": "Date",
           "priority": "string",
           "recurrence": "string"
+        }
+      },
+      "get": {
+        "method": "GET",
+        "url": "/api/tasks/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "update": {
+        "method": "PUT",
+        "url": "/api/tasks/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "delete": {
+        "method": "DELETE",
+        "url": "/api/tasks/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "complete": {
+        "method": "PUT",
+        "url": "/api/tasks/:id/complete",
+        "headers": {
+          "Authorization": "Bearer <token>"
         }
       },
       "sync": {
@@ -324,6 +419,27 @@
           "images": "array"
         }
       },
+      "get": {
+        "method": "GET",
+        "url": "/api/records/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "update": {
+        "method": "PUT",
+        "url": "/api/records/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "delete": {
+        "method": "DELETE",
+        "url": "/api/records/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
       "sync": {
         "method": "POST",
         "url": "/api/records/sync",
@@ -372,6 +488,13 @@
           "notes": "string"
         }
       },
+      "get": {
+        "method": "GET",
+        "url": "/api/invoices/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
       "updateStatus": {
         "method": "PUT",
         "url": "/api/invoices/:id/status",
@@ -389,6 +512,14 @@
         "headers": {
           "Authorization": "Bearer <token>"
         }
+      },
+      "stats": {
+        "method": "GET",
+        "url": "/api/invoices/stats",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        },
+        "adminOnly": true
       }
     }
   },
@@ -427,6 +558,20 @@
           "notes": "string"
         }
       },
+      "get": {
+        "method": "GET",
+        "url": "/api/appointments/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "update": {
+        "method": "PUT",
+        "url": "/api/appointments/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
       "updateStatus": {
         "method": "PUT",
         "url": "/api/appointments/:id/status",
@@ -436,6 +581,37 @@
         "body": {
           "status": "string"
         }
+      },
+      "delete": {
+        "method": "DELETE",
+        "url": "/api/appointments/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "clientAppointments": {
+        "method": "GET",
+        "url": "/api/appointments/client/:clientId",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        },
+        "adminOnly": true
+      },
+      "technicianAppointments": {
+        "method": "GET",
+        "url": "/api/appointments/technician/:technicianId",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        },
+        "adminOnly": true
+      },
+      "availableTechnicians": {
+        "method": "GET",
+        "url": "/api/appointments/technicians",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        },
+        "adminOnly": true
       }
     }
   },
@@ -458,28 +634,32 @@
         "query": {
           "startDate": "string (optional)",
           "endDate": "string (optional)"
-        }
+        },
+        "adminOnly": true
       },
       "clients": {
         "method": "GET",
         "url": "/api/analytics/clients",
         "headers": {
           "Authorization": "Bearer <token>"
-        }
+        },
+        "adminOnly": true
       },
       "technicians": {
         "method": "GET",
         "url": "/api/analytics/technicians",
         "headers": {
           "Authorization": "Bearer <token>"
-        }
+        },
+        "adminOnly": true
       },
       "revenue": {
         "method": "GET",
         "url": "/api/analytics/revenue",
         "headers": {
           "Authorization": "Bearer <token>"
-        }
+        },
+        "adminOnly": true
       }
     }
   },
@@ -498,21 +678,24 @@
           "role": "user | admin",
           "phone": "string (optional)",
           "consentGiven": "boolean (optional)"
-        }
+        },
+        "adminOnly": true
       },
       "listUsers": {
         "method": "GET",
         "url": "/api/admin/users",
         "headers": {
           "Authorization": "Bearer <token>"
-        }
+        },
+        "adminOnly": true
       },
       "deleteUser": {
         "method": "DELETE",
         "url": "/api/admin/users/:id",
         "headers": {
           "Authorization": "Bearer <token>"
-        }
+        },
+        "adminOnly": true
       }
     }
   },
@@ -540,6 +723,27 @@
         "query": {
           "category": "string (optional)",
           "search": "string (optional)"
+        }
+      },
+      "get": {
+        "method": "GET",
+        "url": "/api/troubleshooting/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "update": {
+        "method": "PUT",
+        "url": "/api/troubleshooting/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "delete": {
+        "method": "DELETE",
+        "url": "/api/troubleshooting/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
         }
       }
     }
@@ -619,5 +823,10 @@
     "csrf": "Protection CSRF avec Helmet",
     "encryption": "Numéros de téléphone chiffrés (GDPR)",
     "passwordHashing": "bcrypt pour les mots de passe"
+  },
+  "permissions": {
+    "adminOnly": "Routes réservées aux administrateurs",
+    "userAccess": "Routes accessibles aux utilisateurs standard",
+    "public": "Routes publiques (sans authentification)"
   }
 } 
