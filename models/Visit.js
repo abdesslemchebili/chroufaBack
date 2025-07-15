@@ -32,7 +32,7 @@ const VisitSchema = new mongoose.Schema({
   },
   scheduledTimeSlot: {
     type: String,
-    enum: ['morning', 'afternoon', 'evening'],
+    enum: ['morning', 'afternoon', 'evening', null],
     default: null
   },
   reason: {
