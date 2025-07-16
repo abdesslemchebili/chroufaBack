@@ -2,9 +2,11 @@ const express = require('express');
 const router = express.Router();
 const { 
   login, 
-  getMe 
+  getMe,
+  changePassword
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
+const { passwordChangeValidationRules, validate } = require('../middleware/validation');
 
 /**
  * @swagger
@@ -19,12 +21,12 @@ const { protect } = require('../middleware/auth');
  *           schema:
  *             type: object
  *             required:
- *               - email
+ *               - username
  *               - password
  *             properties:
- *               email:
+ *               username:
  *                 type: string
- *                 example: admin@example.com
+ *                 example: admin
  *               password:
  *                 type: string
  *                 example: admin123
@@ -51,6 +53,9 @@ const { protect } = require('../middleware/auth');
  *                     name:
  *                       type: string
  *                       example: Admin User
+ *                     username:
+ *                       type: string
+ *                       example: admin
  *                     email:
  *                       type: string
  *                       example: admin@example.com
@@ -77,6 +82,40 @@ router.post('/login', login);
  *         description: Not authorized
  */
 router.get('/me', protect, getMe);
+
+/**
+ * @swagger
+ * /api/auth/change-password:
+ *   put:
+ *     summary: Change user password
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - currentPassword
+ *               - newPassword
+ *             properties:
+ *               currentPassword:
+ *                 type: string
+ *                 example: oldpassword123
+ *               newPassword:
+ *                 type: string
+ *                 example: newpassword123
+ *     responses:
+ *       200:
+ *         description: Password changed successfully
+ *       400:
+ *         description: Invalid input data
+ *       401:
+ *         description: Current password is incorrect
+ */
+router.put('/change-password', protect, passwordChangeValidationRules(), validate, changePassword);
 
 module.exports = router;
 

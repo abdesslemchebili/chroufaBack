@@ -6,20 +6,32 @@ const User = require('../models/User');
 // @access  Admin
 exports.addUser = async (req, res, next) => {
   try {
-    const { name, email, password, role, phone, consentGiven } = req.body;
+    const { name, username, email, password, role, phone, consentGiven } = req.body;
     
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
+    // Check if user already exists with username
+    const existingUserByUsername = await User.findOne({ username });
+    if (existingUserByUsername) {
       return res.status(400).json({
         success: false,
-        message: 'User with this email already exists'
+        message: 'User with this username already exists'
       });
+    }
+    
+    // Check if user already exists with email (if email is provided)
+    if (email) {
+      const existingUserByEmail = await User.findOne({ email });
+      if (existingUserByEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'User with this email already exists'
+        });
+      }
     }
     
     // Create new user
     const user = await User.create({
       name,
+      username,
       email,
       password, // Will be hashed by the pre-save hook in the User model
       role: role || 'user', // Default to 'user' if not specified
@@ -32,6 +44,7 @@ exports.addUser = async (req, res, next) => {
     const userResponse = {
       id: user._id,
       name: user.name,
+      username: user.username,
       email: user.email,
       role: user.role,
       phone: user.phone,

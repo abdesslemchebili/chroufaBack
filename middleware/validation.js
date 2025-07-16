@@ -16,8 +16,15 @@ exports.validate = (req, res, next) => {
 exports.userValidationRules = () => {
   return [
     body('name', 'Name is required').notEmpty(),
-    body('email', 'Please include a valid email').isEmail(),
-    body('password', 'Password must be at least 8 characters').isLength({ min: 8 }),
+    body('username', 'Username is required')
+      .notEmpty()
+      .isLength({ min: 3, max: 30 })
+      .matches(/^[a-zA-Z0-9_]+$/)
+      .withMessage('Username can only contain letters, numbers, and underscores'),
+    body('email', 'Please include a valid email')
+      .optional()
+      .isEmail(),
+    body('password', 'Password is required').notEmpty(),
     body('consentGiven', 'Consent must be explicitly given as true or false').isBoolean()
   ];
 };
@@ -89,5 +96,13 @@ exports.guideValidationRules = () => {
     body('steps.*.order', 'Step order is required').isNumeric(),
     body('steps.*.title', 'Step title is required').notEmpty(),
     body('steps.*.description', 'Step description is required').notEmpty()
+  ];
+};
+
+// Password change validation rules
+exports.passwordChangeValidationRules = () => {
+  return [
+    body('currentPassword', 'Current password is required').notEmpty(),
+    body('newPassword', 'New password is required').notEmpty()
   ];
 };

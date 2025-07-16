@@ -17,22 +17,26 @@ const User = require('../models/User');
  *             type: object
  *             required:
  *               - name
- *               - email
+ *               - username
  *               - password
  *             properties:
  *               name:
  *                 type: string
  *                 description: Admin's full name
  *                 example: Admin User
+ *               username:
+ *                 type: string
+ *                 description: Admin's username (3-30 characters, letters, numbers, underscores only)
+ *                 example: admin
  *               email:
  *                 type: string
  *                 format: email
- *                 description: Admin's email address
+ *                 description: Admin's email address (optional)
  *                 example: admin@example.com
  *               password:
  *                 type: string
  *                 format: password
- *                 description: Admin's password (min 6 characters)
+ *                 description: Admin's password
  *                 example: admin123
  *     responses:
  *       201:
@@ -57,6 +61,9 @@ const User = require('../models/User');
  *                     name:
  *                       type: string
  *                       example: Admin User
+ *                     username:
+ *                       type: string
+ *                       example: admin
  *                     email:
  *                       type: string
  *                       example: admin@example.com
@@ -94,11 +101,32 @@ const User = require('../models/User');
  */
 router.post('/admin', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, username, email, password } = req.body;
+    
+    // Check if admin with username already exists
+    const existingAdmin = await User.findOne({ username });
+    if (existingAdmin) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin with this username already exists'
+      });
+    }
+    
+    // Check if admin with email already exists (if email is provided)
+    if (email) {
+      const existingAdminByEmail = await User.findOne({ email });
+      if (existingAdminByEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'Admin with this email already exists'
+        });
+      }
+    }
     
     // Create admin user
     const admin = await User.create({
       name,
+      username,
       email,
       password, // Will be hashed by the pre-save hook
       role: 'admin',

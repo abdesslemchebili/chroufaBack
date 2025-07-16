@@ -48,18 +48,18 @@ exports.updateProfile = async (req, res, next) => {
 // @access  Public
 exports.login = async (req, res, next) => {
   try {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
     
-    // Check if email and password are provided
-    if (!email || !password) {
+    // Check if username and password are provided
+    if (!username || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide email and password'
+        message: 'Please provide username and password'
       });
     }
     
     // Check if user exists
-    const user = await User.findOne({ email }).select('+password');
+    const user = await User.findOne({ username }).select('+password');
     
     if (!user) {
       return res.status(401).json({
@@ -87,6 +87,7 @@ exports.login = async (req, res, next) => {
       user: {
         id: user._id,
         name: user.name,
+        username: user.username,
         email: user.email,
         role: user.role,
         lastSyncTimestamp: user.lastSyncTimestamp
@@ -110,6 +111,7 @@ exports.getMe = async (req, res, next) => {
       user: {
         id: user._id,
         name: user.name,
+        username: user.username,
         email: user.email,
         role: user.role,
         lastSyncTimestamp: user.lastSyncTimestamp
@@ -172,10 +174,67 @@ exports.updateProfile = async (req, res, next) => {
       user: {
         id: updatedUser._id,
         name: updatedUser.name,
+        username: updatedUser.username,
         email: updatedUser.email,
         role: updatedUser.role,
         lastSyncTimestamp: updatedUser.lastSyncTimestamp
       }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @desc    Change user password
+// @route   PUT /api/auth/change-password
+// @access  Private
+exports.changePassword = async (req, res, next) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    
+    // Check if current password and new password are provided
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide current password and new password'
+      });
+    }
+    
+    // Check if new password is provided
+    if (!newPassword || newPassword.trim() === '') {
+      return res.status(400).json({
+        success: false,
+        message: 'New password is required'
+      });
+    }
+    
+    // Get user with password
+    const user = await User.findById(req.user.id).select('+password');
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Check if current password matches
+    const isMatch = await user.matchPassword(currentPassword);
+    
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+    
+    // Update password
+    user.password = newPassword;
+    await user.save();
+    
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully'
     });
   } catch (error) {
     next(error);

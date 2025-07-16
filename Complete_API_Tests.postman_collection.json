@@ -49,6 +49,11 @@
       "key": "appointmentId",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "troubleshootingId",
+      "value": "",
+      "type": "string"
     }
   ],
   "auth": {
@@ -99,7 +104,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Admin User\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"name\": \"Admin User\",\n  \"username\": \"admin\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/setup/admin",
@@ -144,7 +149,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+              "raw": "{\n  \"username\": \"admin\",\n  \"password\": \"admin123\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
@@ -206,6 +211,7 @@
                   "    const response = pm.response.json();",
                   "    pm.expect(response).to.have.property('user');",
                   "    pm.expect(response.user).to.have.property('name');",
+                  "    pm.expect(response.user).to.have.property('username');",
                   "    pm.expect(response.user).to.have.property('email');",
                   "});"
                 ]
@@ -214,7 +220,7 @@
           ]
         },
         {
-          "name": "Update Profile",
+          "name": "Change Password",
           "request": {
             "method": "PUT",
             "header": [
@@ -225,12 +231,12 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Updated Admin User\",\n  \"phone\": \"+1234567890\"\n}"
+              "raw": "{\n  \"currentPassword\": \"admin123\",\n  \"newPassword\": \"newadmin123\"\n}"
             },
             "url": {
-              "raw": "{{baseUrl}}/api/auth/profile",
+              "raw": "{{baseUrl}}/api/auth/change-password",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "profile"]
+              "path": ["api", "auth", "change-password"]
             }
           },
           "response": [],
@@ -241,6 +247,13 @@
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response contains success message\", function () {",
+                  "    const response = pm.response.json();",
+                  "    pm.expect(response).to.have.property('success');",
+                  "    pm.expect(response.success).to.be.true;",
+                  "    pm.expect(response).to.have.property('message');",
                   "});"
                 ]
               }
@@ -248,23 +261,14 @@
           ]
         },
         {
-          "name": "Update Consent",
+          "name": "Delete User",
           "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"consentGiven\": true\n}"
-            },
+            "method": "DELETE",
+            "header": [],
             "url": {
-              "raw": "{{baseUrl}}/api/auth/consent",
+              "raw": "{{baseUrl}}/api/admin/users/{{userId}}",
               "host": ["{{baseUrl}}"],
-              "path": ["api", "auth", "consent"]
+              "path": ["api", "admin", "users", "{{userId}}"]
             }
           },
           "response": [],
@@ -298,7 +302,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"user@example.com\",\n  \"password\": \"user123\",\n  \"role\": \"user\",\n  \"phone\": \"+1987654321\",\n  \"consentGiven\": true\n}"
+              "raw": "{\n  \"name\": \"Test User\",\n  \"username\": \"testuser\",\n  \"email\": \"user@example.com\",\n  \"password\": \"user123\",\n  \"role\": \"user\",\n  \"phone\": \"+1987654321\",\n  \"consentGiven\": true\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/admin/users",
@@ -474,6 +478,65 @@
               }
             }
           ]
+        },
+        {
+          "name": "Delete Pool",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/pools/{{poolId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools", "{{poolId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Pool Status",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"maintenance\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/pools/{{poolId}}/status",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "pools", "{{poolId}}", "status"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -492,7 +555,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"poolId\": \"{{poolId}}\",\n  \"serviceType\": \"maintenance\",\n  \"description\": \"Regular pool maintenance\",\n  \"preferredDate\": \"2024-01-15T10:00:00.000Z\",\n  \"preferredTimeSlot\": \"morning\",\n  \"priority\": \"medium\"\n}"
+              "raw": "{\n  \"poolId\": \"{{poolId}}\",\n  \"requestedDate\": \"2024-01-15T10:00:00.000Z\",\n  \"preferredTimeSlot\": \"morning\",\n  \"reason\": \"Regular pool maintenance and chemical balance check\",\n  \"description\": \"Complete pool maintenance including cleaning, chemical adjustment, and equipment inspection\",\n  \"priority\": \"medium\",\n  \"contactPhone\": \"+1234567890\",\n  \"contactEmail\": \"client@example.com\",\n  \"specialInstructions\": \"Please call 30 minutes before arrival\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/visits",
@@ -558,7 +621,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"scheduledDate\": \"2024-01-15T10:00:00.000Z\",\n  \"technicianId\": \"{{userId}}\",\n  \"notes\": \"Approved for maintenance\"\n}"
+              "raw": "{\n  \"scheduledDate\": \"2024-01-15T10:00:00.000Z\",\n  \"scheduledTimeSlot\": \"morning\",\n  \"assignedTechnician\": \"{{userId}}\",\n  \"estimatedDuration\": 120,\n  \"adminNotes\": \"Approved for maintenance. Technician will arrive at 10:00 AM.\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/visits/{{visitId}}/approve",
@@ -598,6 +661,218 @@
               "raw": "{{baseUrl}}/api/visits/{{visitId}}/complete",
               "host": ["{{baseUrl}}"],
               "path": ["api", "visits", "{{visitId}}", "complete"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Visit Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/stats?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "stats"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Single Visit",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Visit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated visit description\",\n  \"priority\": \"high\",\n  \"specialInstructions\": \"Updated special instructions\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Decline Visit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"declineReason\": \"Technician unavailable on requested date. Please reschedule for next week.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/decline",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "decline"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reschedule Visit",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"scheduledDate\": \"2024-01-20T14:00:00.000Z\",\n  \"scheduledTimeSlot\": \"afternoon\",\n  \"rescheduleReason\": \"Original time slot unavailable. Rescheduled to afternoon.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/reschedule",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "reschedule"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Cancel Visit",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}", "cancel"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Visit",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/visits/{{visitId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "visits", "{{visitId}}"]
             }
           },
           "response": [],
@@ -718,6 +993,115 @@
               }
             }
           ]
+        },
+        {
+          "name": "Get Single Task",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Task",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Task Title\",\n  \"description\": \"Updated task description\",\n  \"priority\": \"high\",\n  \"scheduledDate\": \"2024-01-22T10:00:00.000Z\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Complete Task",
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}/complete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}", "complete"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Task",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/tasks/{{taskId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "tasks", "{{taskId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -808,6 +1192,90 @@
               "raw": "{{baseUrl}}/api/records/sync",
               "host": ["{{baseUrl}}"],
               "path": ["api", "records", "sync"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Single Record",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Updated chemical adjustment record\",\n  \"measurements\": {\n    \"chlorine\": 3.0,\n    \"pH\": 7.2,\n    \"alkalinity\": 120,\n    \"temperature\": 80\n  },\n  \"notes\": \"Updated chemical levels and measurements\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Record",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/records/{{recordId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "records", "{{recordId}}"]
             }
           },
           "response": [],
@@ -953,6 +1421,66 @@
               }
             }
           ]
+        },
+        {
+          "name": "Get Single Invoice",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/{{invoiceId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices", "{{invoiceId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Invoice Stats",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/invoices/stats?startDate=2024-01-01&endDate=2024-12-31",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "invoices", "stats"],
+              "query": [
+                {
+                  "key": "startDate",
+                  "value": "2024-01-01"
+                },
+                {
+                  "key": "endDate",
+                  "value": "2024-12-31"
+                }
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1043,6 +1571,165 @@
               "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}/status",
               "host": ["{{baseUrl}}"],
               "path": ["api", "appointments", "{{appointmentId}}", "status"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Single Appointment",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "{{appointmentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Appointment",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"serviceType\": \"cleaning\",\n  \"frequency\": \"biweekly\",\n  \"preferredTimeSlot\": \"afternoon\",\n  \"notes\": \"Updated appointment details\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "{{appointmentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Appointment",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/{{appointmentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "{{appointmentId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Client Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/client/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "client", "{{userId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Technician Appointments",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/technician/{{userId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "technician", "{{userId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get Available Technicians",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/appointments/technicians",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "appointments", "technicians"]
             }
           },
           "response": [],
@@ -1244,6 +1931,90 @@
               }
             }
           ]
+        },
+        {
+          "name": "Get Single Troubleshooting Guide",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/troubleshooting/{{troubleshootingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "troubleshooting", "{{troubleshootingId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Troubleshooting Guide",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Troubleshooting Guide\",\n  \"description\": \"Updated guide description\",\n  \"category\": \"water-quality\",\n  \"steps\": [\n    {\n      \"order\": 1,\n      \"title\": \"Step 1\",\n      \"description\": \"Updated step description\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/troubleshooting/{{troubleshootingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "troubleshooting", "{{troubleshootingId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Troubleshooting Guide",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/troubleshooting/{{troubleshootingId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "troubleshooting", "{{troubleshootingId}}"]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ]
+              }
+            }
+          ]
         }
       ]
     },
@@ -1262,7 +2033,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"invalid@example.com\",\n  \"password\": \"wrongpassword\"\n}"
+              "raw": "{\n  \"username\": \"invaliduser\",\n  \"password\": \"wrongpassword\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
