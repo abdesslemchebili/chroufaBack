@@ -2,7 +2,7 @@
   "api": {
     "baseUrl": "http://localhost:3000/api",
     "documentation": "http://localhost:3000/api-docs",
-    "version": "1.0.0"
+    "version": "2.0.0"
   },
   "authentication": {
     "type": "Bearer Token",
@@ -13,13 +13,19 @@
         "method": "POST",
         "url": "/api/auth/login",
         "body": {
-          "email": "string",
-          "password": "string"
+          "username": "string (required)",
+          "password": "string (required)"
         },
         "response": {
           "success": "boolean",
           "token": "string",
-          "user": "object"
+          "user": {
+            "id": "string",
+            "name": "string",
+            "username": "string",
+            "email": "string (optional)",
+            "role": "string"
+          }
         }
       },
       "profile": {
@@ -30,28 +36,28 @@
         },
         "response": {
           "success": "boolean",
-          "user": "object"
+          "user": {
+            "id": "string",
+            "name": "string",
+            "username": "string",
+            "email": "string (optional)",
+            "role": "string"
+          }
         }
       },
-      "updateProfile": {
+      "changePassword": {
         "method": "PUT",
-        "url": "/api/auth/profile",
+        "url": "/api/auth/change-password",
         "headers": {
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "name": "string (optional)",
-          "phone": "string (optional)"
-        }
-      },
-      "updateConsent": {
-        "method": "PUT",
-        "url": "/api/auth/consent",
-        "headers": {
-          "Authorization": "Bearer <token>"
+          "currentPassword": "string (required)",
+          "newPassword": "string (required)"
         },
-        "body": {
-          "consentGiven": "boolean"
+        "response": {
+          "success": "boolean",
+          "message": "string"
         }
       }
     }
@@ -64,12 +70,66 @@
     "structure": {
       "id": "string",
       "name": "string",
-      "email": "string",
+      "username": "string (required, unique)",
+      "email": "string (optional, unique)",
       "role": "user | admin",
       "phone": "string (encrypted)",
       "consentGiven": "boolean",
       "consentDate": "Date",
       "lastSyncTimestamp": "Date"
+    }
+  },
+  "setup": {
+    "endpoints": {
+      "createAdmin": {
+        "method": "POST",
+        "url": "/api/setup/admin",
+        "body": {
+          "name": "string (required)",
+          "username": "string (required, 3-30 chars, letters/numbers/underscores)",
+          "email": "string (optional)",
+          "password": "string (required)"
+        },
+        "response": {
+          "success": "boolean",
+          "message": "string",
+          "data": "object"
+        }
+      }
+    }
+  },
+  "admin": {
+    "endpoints": {
+      "createUser": {
+        "method": "POST",
+        "url": "/api/admin/users",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "name": "string (required)",
+          "username": "string (required, 3-30 chars, letters/numbers/underscores)",
+          "email": "string (optional)",
+          "password": "string (required)",
+          "role": "user | admin (optional, default: user)",
+          "phone": "string (optional)",
+          "consentGiven": "boolean (optional, default: false)"
+        }
+      },
+      "listUsers": {
+        "method": "GET",
+        "url": "/api/admin/users",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      },
+      "deleteUser": {
+        "method": "DELETE",
+        "url": "/api/admin/users/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
+      }
     }
   },
   "pools": {
@@ -109,10 +169,10 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "name": "string",
-          "address": "string",
-          "owner": "string",
-          "type": "string",
+          "name": "string (required)",
+          "address": "string (required)",
+          "owner": "string (required, User ID)",
+          "type": "string (required)",
           "size": "object (optional)",
           "volume": "object (optional)"
         }
@@ -129,6 +189,14 @@
         "url": "/api/pools/:id",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "name": "string (optional)",
+          "address": "string (optional)",
+          "type": "string (optional)",
+          "size": "object (optional)",
+          "volume": "object (optional)",
+          "status": "string (optional)"
         }
       },
       "delete": {
@@ -155,8 +223,7 @@
       "pending": "En attente",
       "approved": "Approuvée",
       "declined": "Refusée",
-      "scheduled": "Planifiée",
-      "in_progress": "En cours",
+      "rescheduled": "Reprogrammée",
       "completed": "Terminée",
       "cancelled": "Annulée"
     },
@@ -169,15 +236,8 @@
     "timeSlots": {
       "morning": "Matin",
       "afternoon": "Après-midi",
-      "evening": "Soir"
-    },
-    "serviceTypes": {
-      "maintenance": "Maintenance",
-      "repair": "Réparation",
-      "inspection": "Inspection",
-      "cleaning": "Nettoyage",
-      "chemical_adjustment": "Ajustement chimique",
-      "emergency": "Urgence"
+      "evening": "Soir",
+      "any": "N'importe quand"
     },
     "endpoints": {
       "list": {
@@ -202,12 +262,12 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "poolId": "string",
-          "requestedDate": "Date",
-          "preferredTimeSlot": "morning | afternoon | evening | any",
-          "reason": "string",
-          "description": "string (optional)",
-          "priority": "low | medium | high | urgent (optional)",
+          "poolId": "string (required)",
+          "requestedDate": "string (required, ISO date)",
+          "preferredTimeSlot": "morning | afternoon | evening | any (optional, default: any)",
+          "reason": "string (required, 5-500 chars)",
+          "description": "string (optional, max 1000 chars)",
+          "priority": "low | medium | high | urgent (optional, default: medium)",
           "contactPhone": "string (optional)",
           "contactEmail": "string (optional)",
           "specialInstructions": "string (optional)"
@@ -225,6 +285,11 @@
         "url": "/api/visits/:id",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "description": "string (optional)",
+          "priority": "string (optional)",
+          "specialInstructions": "string (optional)"
         }
       },
       "delete": {
@@ -241,11 +306,11 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "scheduledDate": "Date",
-          "scheduledTimeSlot": "morning | afternoon | evening",
-          "assignedTechnician": "string (optional)",
-          "estimatedDuration": "number (optional)",
-          "adminNotes": "string (optional)"
+          "scheduledDate": "string (required, ISO date)",
+          "scheduledTimeSlot": "morning | afternoon | evening (required)",
+          "assignedTechnician": "string (optional, User ID)",
+          "estimatedDuration": "number (optional, 15-480 minutes)",
+          "adminNotes": "string (optional, max 1000 chars)"
         }
       },
       "decline": {
@@ -255,7 +320,7 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "declineReason": "string"
+          "declineReason": "string (required, 5-500 chars)"
         }
       },
       "reschedule": {
@@ -265,9 +330,9 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "scheduledDate": "Date",
-          "scheduledTimeSlot": "morning | afternoon | evening",
-          "rescheduleReason": "string"
+          "scheduledDate": "string (required, ISO date)",
+          "scheduledTimeSlot": "morning | afternoon | evening (required)",
+          "rescheduleReason": "string (required, 5-500 chars)"
         }
       },
       "complete": {
@@ -275,10 +340,6 @@
         "url": "/api/visits/:id/complete",
         "headers": {
           "Authorization": "Bearer <token>"
-        },
-        "body": {
-          "completionNotes": "string",
-          "technicianId": "string"
         }
       },
       "cancel": {
@@ -294,17 +355,14 @@
         "headers": {
           "Authorization": "Bearer <token>"
         },
-        "adminOnly": true
+        "query": {
+          "startDate": "string (optional)",
+          "endDate": "string (optional)"
+        }
       }
     }
   },
   "tasks": {
-    "status": {
-      "pending": "En attente",
-      "in_progress": "En cours",
-      "completed": "Terminée",
-      "cancelled": "Annulée"
-    },
     "priorities": {
       "low": "Faible",
       "medium": "Moyenne",
@@ -332,12 +390,11 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "title": "string",
-          "description": "string",
-          "poolId": "string",
-          "scheduledDate": "Date",
-          "priority": "string",
-          "recurrence": "string"
+          "title": "string (required)",
+          "poolId": "string (required)",
+          "scheduledDate": "string (required, ISO date)",
+          "priority": "low | medium | high (optional)",
+          "recurrence": "none | daily | weekly | biweekly | monthly (optional)"
         }
       },
       "get": {
@@ -352,6 +409,13 @@
         "url": "/api/tasks/:id",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "title": "string (optional)",
+          "description": "string (optional)",
+          "scheduledDate": "string (optional)",
+          "priority": "string (optional)",
+          "recurrence": "string (optional)"
         }
       },
       "delete": {
@@ -375,7 +439,7 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "tasks": "array"
+          "tasks": "array of task objects"
         }
       }
     }
@@ -387,12 +451,6 @@
       "repair": "Réparation",
       "inspection": "Inspection",
       "other": "Autre"
-    },
-    "measurements": {
-      "chlorine": "number",
-      "pH": "number",
-      "alkalinity": "number",
-      "temperature": "number"
     },
     "endpoints": {
       "list": {
@@ -409,14 +467,23 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "poolId": "string",
-          "taskId": "string (optional)",
-          "type": "string",
-          "description": "string",
-          "measurements": "object",
-          "productsUsed": "array",
-          "notes": "string",
-          "images": "array"
+          "poolId": "string (required)",
+          "type": "chemical | cleaning | repair | inspection | other (required)",
+          "description": "string (required)",
+          "measurements": {
+            "chlorine": "number (optional)",
+            "pH": "number (optional)",
+            "alkalinity": "number (optional)",
+            "temperature": "number (optional)"
+          },
+          "productsUsed": [
+            {
+              "name": "string (required)",
+              "quantity": "number (required)",
+              "unit": "string (required)"
+            }
+          ],
+          "notes": "string (optional)"
         }
       },
       "get": {
@@ -431,6 +498,12 @@
         "url": "/api/records/:id",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "description": "string (optional)",
+          "measurements": "object (optional)",
+          "productsUsed": "array (optional)",
+          "notes": "string (optional)"
         }
       },
       "delete": {
@@ -447,7 +520,7 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "records": "array"
+          "records": "array of record objects"
         }
       }
     }
@@ -461,10 +534,10 @@
       "cancelled": "Annulée"
     },
     "paymentMethods": {
+      "cash": "Espèces",
       "credit_card": "Carte de crédit",
       "bank_transfer": "Virement bancaire",
-      "check": "Chèque",
-      "cash": "Espèces"
+      "check": "Chèque"
     },
     "endpoints": {
       "list": {
@@ -481,11 +554,17 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "visitId": "string",
-          "items": "array",
-          "tax": "number",
-          "dueDate": "Date",
-          "notes": "string"
+          "visitId": "string (required)",
+          "items": [
+            {
+              "description": "string (required)",
+              "quantity": "number (required)",
+              "unitPrice": "number (required)"
+            }
+          ],
+          "tax": "number (optional)",
+          "dueDate": "string (required, ISO date)",
+          "notes": "string (optional)"
         }
       },
       "get": {
@@ -502,15 +581,8 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "status": "string",
-          "paymentMethod": "string (optional)"
-        }
-      },
-      "remind": {
-        "method": "POST",
-        "url": "/api/invoices/:id/remind",
-        "headers": {
-          "Authorization": "Bearer <token>"
+          "status": "draft | sent | paid | overdue | cancelled",
+          "paymentMethod": "cash | credit_card | bank_transfer | check (optional)"
         }
       },
       "stats": {
@@ -519,21 +591,37 @@
         "headers": {
           "Authorization": "Bearer <token>"
         },
-        "adminOnly": true
+        "query": {
+          "startDate": "string (optional)",
+          "endDate": "string (optional)"
+        }
+      },
+      "sendReminder": {
+        "method": "POST",
+        "url": "/api/invoices/:id/remind",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        }
       }
     }
   },
   "appointments": {
-    "frequencies": {
+    "status": {
+      "active": "Active",
+      "paused": "En pause",
+      "cancelled": "Annulée"
+    },
+    "serviceTypes": {
+      "maintenance": "Maintenance",
+      "cleaning": "Nettoyage",
+      "inspection": "Inspection",
+      "repair": "Réparation"
+    },
+    "frequency": {
       "weekly": "Hebdomadaire",
       "biweekly": "Bi-hebdomadaire",
       "monthly": "Mensuelle",
       "quarterly": "Trimestrielle"
-    },
-    "status": {
-      "active": "Actif",
-      "paused": "En pause",
-      "cancelled": "Annulé"
     },
     "endpoints": {
       "list": {
@@ -550,12 +638,12 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "poolId": "string",
-          "serviceType": "string",
-          "frequency": "string",
-          "startDate": "Date",
-          "preferredTimeSlot": "string",
-          "notes": "string"
+          "poolId": "string (required)",
+          "serviceType": "maintenance | cleaning | inspection | repair (required)",
+          "frequency": "weekly | biweekly | monthly | quarterly (required)",
+          "startDate": "string (required, ISO date)",
+          "preferredTimeSlot": "morning | afternoon | evening (optional)",
+          "notes": "string (optional)"
         }
       },
       "get": {
@@ -570,6 +658,12 @@
         "url": "/api/appointments/:id",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "serviceType": "string (optional)",
+          "frequency": "string (optional)",
+          "preferredTimeSlot": "string (optional)",
+          "notes": "string (optional)"
         }
       },
       "updateStatus": {
@@ -579,7 +673,7 @@
           "Authorization": "Bearer <token>"
         },
         "body": {
-          "status": "string"
+          "status": "active | paused | cancelled"
         }
       },
       "delete": {
@@ -589,41 +683,30 @@
           "Authorization": "Bearer <token>"
         }
       },
-      "clientAppointments": {
+      "getClientAppointments": {
         "method": "GET",
         "url": "/api/appointments/client/:clientId",
         "headers": {
           "Authorization": "Bearer <token>"
-        },
-        "adminOnly": true
+        }
       },
-      "technicianAppointments": {
+      "getTechnicianAppointments": {
         "method": "GET",
         "url": "/api/appointments/technician/:technicianId",
         "headers": {
           "Authorization": "Bearer <token>"
-        },
-        "adminOnly": true
+        }
       },
-      "availableTechnicians": {
+      "getAvailableTechnicians": {
         "method": "GET",
         "url": "/api/appointments/technicians",
         "headers": {
           "Authorization": "Bearer <token>"
-        },
-        "adminOnly": true
+        }
       }
     }
   },
   "analytics": {
-    "periods": {
-      "today": "Aujourd'hui",
-      "week": "Cette semaine",
-      "month": "Ce mois",
-      "quarter": "Ce trimestre",
-      "year": "Cette année",
-      "custom": "Période personnalisée"
-    },
     "endpoints": {
       "dashboard": {
         "method": "GET",
@@ -634,85 +717,38 @@
         "query": {
           "startDate": "string (optional)",
           "endDate": "string (optional)"
-        },
-        "adminOnly": true
+        }
       },
       "clients": {
         "method": "GET",
         "url": "/api/analytics/clients",
         "headers": {
           "Authorization": "Bearer <token>"
-        },
-        "adminOnly": true
+        }
       },
       "technicians": {
         "method": "GET",
         "url": "/api/analytics/technicians",
         "headers": {
           "Authorization": "Bearer <token>"
-        },
-        "adminOnly": true
+        }
       },
       "revenue": {
         "method": "GET",
         "url": "/api/analytics/revenue",
         "headers": {
           "Authorization": "Bearer <token>"
-        },
-        "adminOnly": true
-      }
-    }
-  },
-  "admin": {
-    "endpoints": {
-      "createUser": {
-        "method": "POST",
-        "url": "/api/admin/users",
-        "headers": {
-          "Authorization": "Bearer <token>"
-        },
-        "body": {
-          "name": "string",
-          "email": "string",
-          "password": "string",
-          "role": "user | admin",
-          "phone": "string (optional)",
-          "consentGiven": "boolean (optional)"
-        },
-        "adminOnly": true
-      },
-      "listUsers": {
-        "method": "GET",
-        "url": "/api/admin/users",
-        "headers": {
-          "Authorization": "Bearer <token>"
-        },
-        "adminOnly": true
-      },
-      "deleteUser": {
-        "method": "DELETE",
-        "url": "/api/admin/users/:id",
-        "headers": {
-          "Authorization": "Bearer <token>"
-        },
-        "adminOnly": true
-      }
-    }
-  },
-  "setup": {
-    "endpoints": {
-      "createAdmin": {
-        "method": "POST",
-        "url": "/api/setup/admin",
-        "body": {
-          "name": "string",
-          "email": "string",
-          "password": "string"
         }
       }
     }
   },
   "troubleshooting": {
+    "categories": {
+      "water-quality": "Qualité de l'eau",
+      "equipment": "Équipement",
+      "cleaning": "Nettoyage",
+      "general": "Général"
+    },
     "endpoints": {
       "list": {
         "method": "GET",
@@ -721,8 +757,8 @@
           "Authorization": "Bearer <token>"
         },
         "query": {
-          "category": "string (optional)",
-          "search": "string (optional)"
+          "search": "string (optional)",
+          "category": "string (optional)"
         }
       },
       "get": {
@@ -737,6 +773,12 @@
         "url": "/api/troubleshooting/:id",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "title": "string (optional)",
+          "description": "string (optional)",
+          "category": "string (optional)",
+          "steps": "array (optional)"
         }
       },
       "delete": {
@@ -748,85 +790,66 @@
       }
     }
   },
-  "pagination": {
-    "parameters": {
-      "page": "number (default: 1)",
-      "limit": "number (default: 10)",
-      "sort": "string (optional)",
-      "order": "asc | desc (optional)"
+  "errorResponses": {
+    "400": {
+      "description": "Bad Request - Données invalides",
+      "example": {
+        "success": false,
+        "message": "Validation error",
+        "errors": []
+      }
     },
-    "response": {
-      "success": "boolean",
-      "data": "array",
-      "pagination": {
-        "page": "number",
-        "limit": "number",
-        "total": "number",
-        "pages": "number"
+    "401": {
+      "description": "Unauthorized - Token manquant ou invalide",
+      "example": {
+        "success": false,
+        "message": "Not authorized to access this route"
+      }
+    },
+    "403": {
+      "description": "Forbidden - Accès refusé (rôle insuffisant)",
+      "example": {
+        "success": false,
+        "message": "Not authorized as admin"
+      }
+    },
+    "404": {
+      "description": "Not Found - Ressource introuvable",
+      "example": {
+        "success": false,
+        "message": "Resource not found"
+      }
+    },
+    "500": {
+      "description": "Internal Server Error - Erreur serveur",
+      "example": {
+        "success": false,
+        "message": "Server error"
       }
     }
   },
-  "filters": {
-    "common": {
-      "startDate": "string (YYYY-MM-DD)",
-      "endDate": "string (YYYY-MM-DD)",
-      "status": "string",
-      "priority": "string",
-      "userId": "string",
-      "poolId": "string"
+  "pagination": {
+    "description": "Les endpoints de liste supportent la pagination",
+    "queryParameters": {
+      "page": "number (default: 1)",
+      "limit": "number (default: 10, max: 100)"
     },
-    "search": {
-      "search": "string",
-      "category": "string"
+    "response": {
+      "data": "array",
+      "pagination": {
+        "currentPage": "number",
+        "totalPages": "number",
+        "totalItems": "number",
+        "hasNextPage": "boolean",
+        "hasPrevPage": "boolean"
+      }
     }
   },
-  "errorHandling": {
-    "standardResponse": {
-      "success": "boolean",
-      "message": "string",
-      "error": "string (development only)"
-    },
-    "httpCodes": {
-      "200": "Succès",
-      "201": "Créé",
-      "400": "Données invalides",
-      "401": "Non autorisé",
-      "403": "Accès interdit",
-      "404": "Non trouvé",
-      "500": "Erreur serveur"
-    }
-  },
-  "headers": {
-    "required": {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer <token>"
-    }
-  },
-  "mobileFeatures": {
-    "offlineSync": {
-      "endpoints": [
-        "/api/tasks/sync",
-        "/api/records/sync"
-      ],
-      "timestampField": "lastSyncTimestamp"
-    },
-    "notifications": {
-      "types": [
-        "SMS",
-        "Email"
-      ],
-      "automatic": "Rappels automatiques via cron jobs"
-    }
-  },
-  "security": {
-    "validation": "Toutes les entrées validées côté serveur",
-    "csrf": "Protection CSRF avec Helmet",
-    "encryption": "Numéros de téléphone chiffrés (GDPR)",
-    "passwordHashing": "bcrypt pour les mots de passe"
-  },
-  "permissions": {
-    "adminOnly": "Routes réservées aux administrateurs",
-    "userAccess": "Routes accessibles aux utilisateurs standard",
-    "public": "Routes publiques (sans authentification)"
+  "validation": {
+    "username": "3-30 caractères, lettres, chiffres et underscores uniquement",
+    "password": "Aucune contrainte de longueur minimale",
+    "email": "Format email valide, optionnel",
+    "phone": "Format international recommandé (+1234567890)",
+    "dates": "Format ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)"
   }
 } 
