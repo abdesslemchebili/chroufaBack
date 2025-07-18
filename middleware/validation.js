@@ -59,6 +59,37 @@ exports.poolValidationRules = () => {
   ];
 };
 
+// Pool update validation rules (allows optional owner change)
+exports.poolUpdateValidationRules = () => {
+  return [
+    body('name', 'Pool name is required').optional().notEmpty().trim(),
+    body('address', 'Street address is required').optional().notEmpty().trim(),
+    body('owner', 'Pool owner must be a valid MongoDB ID').optional().isMongoId(),
+    body('type', 'Pool type must be residential, commercial, or public')
+      .optional()
+      .isIn(['residential', 'commercial', 'public']),
+    // Optional fields
+    body('size.value', 'Size value must be a positive number')
+      .optional()
+      .isFloat({ min: 0 }),
+    body('size.unit', 'Size unit must be sqft or sqm')
+      .optional()
+      .isIn(['sqft', 'sqm']),
+    body('volume.value', 'Volume value must be a positive number')
+      .optional()
+      .isFloat({ min: 0 }),
+    body('volume.unit', 'Volume unit must be gallons or liters')
+      .optional()
+      .isIn(['gallons', 'liters']),
+    body('status', 'Status must be active, inactive, or maintenance')
+      .optional()
+      .isIn(['active', 'inactive', 'maintenance']),
+    body('notes', 'Notes must be a string')
+      .optional()
+      .isString()
+  ];
+};
+
 // Task validation rules
 exports.taskValidationRules = () => {
   return [

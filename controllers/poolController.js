@@ -121,7 +121,7 @@ exports.updatePool = async (req, res, next) => {
     }
     
     // Update pool with new data
-    const { name, address, type, size, volume, notes, status } = req.body;
+    const { name, address, owner, type, size, volume, notes, status } = req.body;
     const updateData = {};
     
     if (name !== undefined) updateData.name = name;
@@ -131,6 +131,19 @@ exports.updatePool = async (req, res, next) => {
     if (volume !== undefined) updateData.volume = volume;
     if (notes !== undefined) updateData.notes = notes;
     if (status !== undefined) updateData.status = status;
+    
+    // Handle owner change if provided
+    if (owner !== undefined) {
+      // Check if the new owner exists
+      const newOwner = await User.findById(owner);
+      if (!newOwner) {
+        return res.status(404).json({
+          success: false,
+          message: 'New pool owner not found'
+        });
+      }
+      updateData.owner = owner;
+    }
     
     pool = await Pool.findByIdAndUpdate(
       req.params.id,

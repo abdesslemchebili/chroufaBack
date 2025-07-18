@@ -12,6 +12,7 @@ const {
 const { protect } = require('../middleware/auth');
 const { 
   poolValidationRules, 
+  poolUpdateValidationRules,
   validate 
 } = require('../middleware/validation');
 
@@ -215,6 +216,10 @@ router.get('/:id', protect, getPool);
  *               address:
  *                 type: string
  *                 description: Street address
+ *               owner:
+ *                 type: string
+ *                 description: ID of the new pool owner (optional)
+ *                 example: "60d21b4667d0d8992e610c85"
  *               type:
  *                 type: string
  *                 enum: [residential, commercial, public]
@@ -240,7 +245,7 @@ router.get('/:id', protect, getPool);
  *       404:
  *         description: Pool not found
  */
-router.put('/:id', protect, poolValidationRules(), validate, updatePool);
+router.put('/:id', protect, poolUpdateValidationRules(), validate, updatePool);
 
 /**
  * @swagger
