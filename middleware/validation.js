@@ -29,6 +29,31 @@ exports.userValidationRules = () => {
   ];
 };
 
+// User update validation rules (admin only)
+exports.userUpdateValidationRules = () => {
+  return [
+    body('name', 'Name is required').optional().notEmpty(),
+    body('username', 'Username is required')
+      .optional()
+      .notEmpty()
+      .isLength({ min: 3, max: 30 })
+      .matches(/^[a-zA-Z0-9_]+$/)
+      .withMessage('Username can only contain letters, numbers, and underscores'),
+    body('email', 'Please include a valid email')
+      .optional()
+      .isEmail(),
+    body('role', 'Role must be user or admin')
+      .optional()
+      .isIn(['user', 'admin']),
+    body('phone', 'Phone must be a string')
+      .optional()
+      .isString(),
+    body('consentGiven', 'Consent must be explicitly given as true or false')
+      .optional()
+      .isBoolean()
+  ];
+};
+
 // Pool validation rules (simplified)
 exports.poolValidationRules = () => {
   return [

@@ -2,7 +2,16 @@
   "api": {
     "baseUrl": "http://localhost:3000/api",
     "documentation": "http://localhost:3000/api-docs",
-    "version": "2.0.0"
+    "version": "2.1.0",
+    "lastUpdated": "2024-01-15",
+    "changelog": {
+      "2.1.0": [
+        "Added pool owner change functionality",
+        "Added admin user update functionality",
+        "Enhanced validation and error handling",
+        "Updated API documentation"
+      ]
+    }
   },
   "authentication": {
     "type": "Bearer Token",
@@ -114,6 +123,21 @@
           "role": "user | admin (optional, default: user)",
           "phone": "string (optional)",
           "consentGiven": "boolean (optional, default: false)"
+        },
+        "response": {
+          "success": "boolean",
+          "message": "string",
+          "user": {
+            "id": "string",
+            "name": "string",
+            "username": "string",
+            "email": "string",
+            "role": "string",
+            "phone": "string",
+            "consentGiven": "boolean",
+            "consentDate": "Date",
+            "createdAt": "Date"
+          }
         }
       },
       "listUsers": {
@@ -121,13 +145,54 @@
         "url": "/api/admin/users",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "response": {
+          "success": "boolean",
+          "count": "number",
+          "users": "array"
         }
+      },
+      "updateUser": {
+        "method": "PUT",
+        "url": "/api/admin/users/:id",
+        "headers": {
+          "Authorization": "Bearer <token>"
+        },
+        "body": {
+          "name": "string (optional)",
+          "username": "string (optional, 3-30 chars, letters/numbers/underscores)",
+          "email": "string (optional, email format)",
+          "role": "user | admin (optional)",
+          "phone": "string (optional)",
+          "consentGiven": "boolean (optional)"
+        },
+        "response": {
+          "success": "boolean",
+          "message": "string",
+          "user": {
+            "_id": "string",
+            "name": "string",
+            "username": "string",
+            "email": "string",
+            "role": "string",
+            "phone": "string",
+            "consentGiven": "boolean",
+            "consentDate": "Date",
+            "createdAt": "Date",
+            "updatedAt": "Date"
+          }
+        },
+        "notes": "Admin only. Validates username/email uniqueness. Updates consentDate automatically when consentGiven changes."
       },
       "deleteUser": {
         "method": "DELETE",
         "url": "/api/admin/users/:id",
         "headers": {
           "Authorization": "Bearer <token>"
+        },
+        "response": {
+          "success": "boolean",
+          "message": "string"
         }
       }
     }
@@ -193,11 +258,35 @@
         "body": {
           "name": "string (optional)",
           "address": "string (optional)",
+          "owner": "string (optional, User ID - validates new owner exists)",
           "type": "string (optional)",
           "size": "object (optional)",
           "volume": "object (optional)",
-          "status": "string (optional)"
-        }
+          "status": "string (optional)",
+          "notes": "string (optional)"
+        },
+        "response": {
+          "success": "boolean",
+          "data": {
+            "_id": "string",
+            "name": "string",
+            "address": "string",
+            "owner": {
+              "_id": "string",
+              "name": "string",
+              "email": "string"
+            },
+            "type": "string",
+            "size": "object",
+            "volume": "object",
+            "status": "string",
+            "notes": "string",
+            "createdAt": "Date",
+            "updatedAt": "Date"
+          }
+        },
+        "notes": "Supports owner change. Validates new owner exists. Admin or current owner can update."
+      }
       },
       "delete": {
         "method": "DELETE",
@@ -851,5 +940,118 @@
     "email": "Format email valide, optionnel",
     "phone": "Format international recommandé (+1234567890)",
     "dates": "Format ISO 8601 (YYYY-MM-DDTHH:mm:ss.sssZ)"
+  },
+  "newFeatures": {
+    "version": "2.1.0",
+    "description": "Nouvelles fonctionnalités ajoutées",
+    "features": {
+      "poolOwnerChange": {
+        "description": "Changement de propriétaire des piscines",
+        "endpoint": "PUT /api/pools/:id",
+        "body": {
+          "owner": "string (User ID)"
+        },
+        "example": {
+          "method": "PUT",
+          "url": "/api/pools/60d21b4667d0d8992e610c85",
+          "headers": {
+            "Authorization": "Bearer <token>"
+          },
+          "body": {
+            "owner": "60d21b4667d0d8992e610c86"
+          }
+        },
+        "response": {
+          "success": true,
+          "data": {
+            "_id": "60d21b4667d0d8992e610c85",
+            "name": "Pool Name",
+            "address": "Pool Address",
+            "owner": {
+              "_id": "60d21b4667d0d8992e610c86",
+              "name": "New Owner Name",
+              "email": "newowner@example.com"
+            }
+          }
+        },
+        "errorResponses": {
+          "404": "New pool owner not found",
+          "400": "Invalid input data",
+          "401": "Not authorized",
+          "403": "Not authorized to update this pool"
+        }
+      },
+      "adminUserUpdate": {
+        "description": "Mise à jour d'utilisateur par l'administrateur",
+        "endpoint": "PUT /api/admin/users/:id",
+        "body": {
+          "name": "string (optional)",
+          "username": "string (optional)",
+          "email": "string (optional)",
+          "role": "user | admin (optional)",
+          "phone": "string (optional)",
+          "consentGiven": "boolean (optional)"
+        },
+        "example": {
+          "method": "PUT",
+          "url": "/api/admin/users/60d21b4667d0d8992e610c85",
+          "headers": {
+            "Authorization": "Bearer <admin_token>"
+          },
+          "body": {
+            "name": "John Doe Updated",
+            "username": "johndoe_updated",
+            "email": "john.updated@example.com",
+            "role": "admin",
+            "phone": "+1234567890",
+            "consentGiven": true
+          }
+        },
+        "response": {
+          "success": true,
+          "message": "User updated successfully",
+          "user": {
+            "_id": "60d21b4667d0d8992e610c85",
+            "name": "John Doe Updated",
+            "username": "johndoe_updated",
+            "email": "john.updated@example.com",
+            "role": "admin",
+            "phone": "+1234567890",
+            "consentGiven": true,
+            "consentDate": "2024-01-15T10:30:00.000Z",
+            "createdAt": "2024-01-01T00:00:00.000Z",
+            "updatedAt": "2024-01-15T10:30:00.000Z"
+          }
+        },
+        "errorResponses": {
+          "404": "User not found",
+          "400": "User with this username/email already exists",
+          "401": "Not authorized",
+          "403": "Not authorized as admin"
+        },
+        "notes": [
+          "Admin only access",
+          "Validates username/email uniqueness",
+          "Updates consentDate automatically when consentGiven changes",
+          "Supports partial updates"
+        ]
+      }
+    }
+  },
+  "usageExamples": {
+    "poolOwnerChange": {
+      "description": "Exemple de changement de propriétaire d'une piscine",
+      "javascript": {
+        "axios": "const response = await axios.put('/api/pools/60d21b4667d0d8992e610c85', { owner: '60d21b4667d0d8992e610c86' }, { headers: { Authorization: `Bearer ${token}` } });",
+        "fetch": "const response = await fetch('/api/pools/60d21b4667d0d8992e610c85', { method: 'PUT', headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ owner: '60d21b4667d0d8992e610c86' }) });"
+      }
+    },
+    "adminUserUpdate": {
+      "description": "Exemple de mise à jour d'utilisateur par l'admin",
+      "javascript": {
+        "axios": "const response = await axios.put('/api/admin/users/60d21b4667d0d8992e610c85', { name: 'Updated Name', role: 'admin' }, { headers: { Authorization: `Bearer ${adminToken}` } });",
+        "fetch": "const response = await fetch('/api/admin/users/60d21b4667d0d8992e610c85', { method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: 'Updated Name', role: 'admin' }) });"
+      }
+    }
   }
 } 

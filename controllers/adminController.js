@@ -80,6 +80,74 @@ exports.getUsers = async (req, res, next) => {
   }
 };
 
+// @desc    Update user (admin only)
+// @route   PUT /api/admin/users/:id
+// @access  Admin
+exports.updateUser = async (req, res, next) => {
+  try {
+    const { name, username, email, role, phone, consentGiven } = req.body;
+    
+    // Check if user exists
+    const user = await User.findById(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    
+    // Create update object
+    const updateData = {};
+    if (name !== undefined) updateData.name = name;
+    if (username !== undefined) updateData.username = username;
+    if (email !== undefined) updateData.email = email;
+    if (role !== undefined) updateData.role = role;
+    if (phone !== undefined) updateData.phone = phone;
+    if (consentGiven !== undefined) {
+      updateData.consentGiven = consentGiven;
+      updateData.consentDate = consentGiven ? Date.now() : null;
+    }
+    
+    // Check for username conflicts if username is being updated
+    if (username && username !== user.username) {
+      const existingUserByUsername = await User.findOne({ username });
+      if (existingUserByUsername) {
+        return res.status(400).json({
+          success: false,
+          message: 'User with this username already exists'
+        });
+      }
+    }
+    
+    // Check for email conflicts if email is being updated
+    if (email && email !== user.email) {
+      const existingUserByEmail = await User.findOne({ email });
+      if (existingUserByEmail) {
+        return res.status(400).json({
+          success: false,
+          message: 'User with this email already exists'
+        });
+      }
+    }
+    
+    // Update user
+    const updatedUser = await User.findByIdAndUpdate(
+      req.params.id,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    res.status(200).json({
+      success: true,
+      message: 'User updated successfully',
+      user: updatedUser
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @desc    Delete user (admin only)
 // @route   DELETE /api/admin/users/:id
 // @access  Admin
